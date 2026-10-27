@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AskUp — a calm, anonymous classroom question platform.">
+  <title>AskUp — Ask what everyone else is thinking.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Go to home">
+        <span class="brand-mark">A<span>↑</span></span>
+        <span>AskUp</span>
+      </button>
+      <nav class="top-actions" aria-label="Main navigation">
+        <button class="text-button" data-go="home">Home</button>
+        <button class="role-chip student-chip" data-role="student"><span></span> Student demo</button>
+        <button class="role-chip professor-chip" data-role="professor"><span></span> Professor demo</button>
+      </nav>
+    </header>
+
+    <main id="app" tabindex="-1">
+      <section class="view home-view active" data-view="home">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="pulse-dot"></span> Built for better lectures</div>
+          <h1>Every question<br>deserves to be <em>asked.</em></h1>
+          <p>AskUp gives students a quiet way to speak up—and professors a clear view of what the room needs next.</p>
+          <div class="hero-actions">
+            <button class="primary-button" data-role="student">I’m a student <span>↗</span></button>
+            <button class="secondary-button" data-role="professor">I’m a professor <span>→</span></button>
+          </div>
+          <div class="trust-row">
+            <div><strong>Anonymous</strong><span>to the room</span></div>
+            <div><strong>Accountable</strong><span>when it matters</span></div>
+            <div><strong>Live</strong><span>during the lecture</span></div>
+          </div>
+        </div>
+        <div class="hero-visual" aria-label="Preview of AskUp questions">
+          <div class="orb orb-one"></div><div class="orb orb-two"></div>
+          <div class="phone-card">
+            <div class="mini-header"><span class="mini-logo">A↑</span><span class="live-pill"><i></i> Live</span></div>
+            <div class="mini-code">MINT–OWL–24</div>
+            <p class="mini-prompt">What’s on your mind?</p>
+            <div class="mini-question featured">
+              <span class="avatar">?</span>
+              <p>How do we validate an idea before building it?</p>
+              <b>18 ↑</b>
+            </div>
+            <div class="mini-question"><span class="avatar coral">?</span><p>Will this be on the exam?</p><b>12 ↑</b></div>
+            <button class="mini-ask">Ask anonymously <span>↑</span></button>
+          </div>
+          <div class="float-note note-one"><span>✦</span> Zero awkward hand-raises</div>
+          <div class="float-note note-two"><span>♥</span> 24 students joined</div>
+        </div>
+      </section>
+
+      <section class="view auth-view" data-view="student-login">
+        <div class="auth-art student-art">
+          <div class="art-label">FOR STUDENTS</div>
+          <h2>Quiet question.<br><em>Big breakthrough.</em></h2>
+          <p>Your name stays out of the room. Your question helps everyone learn.</p>
+          <div class="quote-card">“Curiosity looks good on you.” <span>✦</span></div>
+        </div>
+        <form class="auth-card" id="student-login-form">
+          <button type="button" class="back-link" data-go="home">← Back</button>
+          <div class="form-heading"><span class="icon-tile mint">☺</span><div><p>Student access</p><h2>Welcome back</h2></div></div>
+          <p class="muted">Use your university account to continue.</p>
+          <label>Student ID<input id="student-id" autocomplete="username" inputmode="numeric" pattern="[0-9]{7}" minlength="7" maxlength="7" title="Student ID must contain exactly 7 numbers." placeholder="e.g. 2026018" required></label>
+          <label>Password<input type="password" autocomplete="current-password" placeholder="Enter your password" required></label>
+          <button class="primary-button full" type="submit">Continue <span>→</span></button>
+          <p class="privacy-note"><span>◆</span> Your identity is never shown with your questions.</p>
+          <p class="prototype-note">Prototype: use any 7-digit student ID and a non-empty password.</p>
+        </form>
+      </section>
+
+      <section class="view auth-view" data-view="professor-login">
+        <div class="auth-art professor-art">
+          <div class="art-label dark">FOR EDUCATORS</div>
+          <h2>Read the room.<br><em>In real time.</em></h2>
+          <p>See what’s confusing, surface the right question, and keep the lecture moving.</p>
+          <div class="signal-graphic"><i></i><i></i><i></i><i></i><span>LIVE</span></div>
+        </div>
+        <form class="auth-card" id="professor-login-form">
+          <button type="button" class="back-link" data-go="home">← Back</button>
+          <div class="form-heading"><span class="icon-tile lilac">✦</span><div><p>Faculty portal</p><h2>Professor login</h2></div></div>
+          <p class="muted">Sign in with your staff account.</p>
+          <label>Staff ID or email<input id="professor-id" type="email" autocomplete="username" placeholder="name@university.edu" title="Professor ID must contain the @ symbol." required></label>
+          <label>Password<input type="password" autocomplete="current-password" placeholder="Enter your password" required></label>
+          <button class="primary-button full" type="submit">Open dashboard <span>→</span></button>
+          <p class="prototype-note">Prototype: use an ID containing @ and a non-empty password.</p>
+        </form>
+      </section>
+
+      <section class="view student-app" data-view="student-join">
+        <aside class="side-panel student-side">
+          <div><span class="side-kicker">ASKUP STUDENT</span><h2>Join the room,<br>not the spotlight.</h2></div>
+          <p>Enter the words shown at the front of your lecture. No camera, no awkward scan.</p>
+          <div class="side-tip"><span>i</span><p><strong>You’re anonymous in class.</strong><br>Ask in good faith. Harmful content is blocked and linked to your account.</p></div>
+        </aside>
+        <div class="join-panel">
+          <div class="user-corner"><span class="user-dot">S</span><span id="student-label">Student</span></div>
+          <div class="join-content">
+            <span class="step-label">STEP 1 OF 1</span>
+            <h1>What’s the session code?</h1>
+            <p>It’s three short words shown by your professor.</p>
+            <form id="join-form">
+              <input id="session-code" class="code-input" placeholder="MINT – OWL – 24" aria-label="Session code" autocomplete="off" required>
+              <button class="primary-button full" type="submit">Join lecture <span>→</span></button>
+            </form>
+            <button class="demo-code" id="use-demo-code">Use active code <strong data-session-code>MINT–OWL–24</strong></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="view dashboard" data-view="student-room">
+        <aside class="dash-sidebar">
+          <div>
+            <div class="brand static"><span class="brand-mark">A<span>↑</span></span><span>AskUp</span></div>
+            <div class="session-badge"><i></i><div><small>LIVE SESSION</small><strong id="student-session-title">Validating opportunities</strong></div></div>
+            <nav class="dash-nav">
+              <button class="active" data-tab="ask"><span>✦</span> Ask a question</button>
+              <button data-tab="questions"><span>↑</span> Class questions <b id="question-count-side">4</b></button>
+            </nav>
+          </div>
+          <div class="identity-card"><span>S</span><div><strong id="student-side-id">Student</strong><small>Anonymous in this room</small></div></div>
+        </aside>
+        <div class="dash-main">
+          <header class="room-header"><div><span class="mobile-live"><i></i> LIVE</span><h1 id="student-room-title">Validating opportunities</h1><p>Fundamentals with Dr. Abdelrahman</p></div><div class="room-code"><small>ROOM CODE</small><strong data-session-code>MINT–OWL–24</strong></div></header>
+          <div class="student-tab active" id="ask-tab">
+            <div class="question-composer">
+              <span class="composer-kicker">YOUR QUESTION</span>
+              <h2>What are you thinking?</h2>
+              <p class="muted">Clear and specific questions are easier to answer.</p>
+              <form id="question-form">
+                <textarea id="question-input" maxlength="280" placeholder="Type your question here…" required></textarea>
+                <div class="composer-footer"><span id="char-count">0 / 280</span><button class="primary-button" type="submit">Ask anonymously <span>↑</span></button></div>
+              </form>
+              <div class="mood-row"><span>Not sure how to phrase it?</span><button class="mood-button" data-prompt="I’m confused about ">😵 I’m confused</button><button class="mood-button" data-prompt="Could you give another example of ">💡 Another example?</button></div>
+            </div>
+            <div class="reassurance-card"><span>◉</span><div><strong>Your name won’t appear.</strong><p>Only the question is visible to classmates and your professor.</p></div></div>
+          </div>
+          <div class="student-tab" id="questions-tab">
+            <div class="section-title-row"><div><span class="composer-kicker">THE ROOM IS ASKING</span><h2>Class questions</h2></div><select id="student-sort" aria-label="Sort questions"><option value="votes">Most upvoted</option><option value="newest">Newest first</option></select></div>
+            <div class="question-list" id="student-question-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view dashboard" data-view="professor-dashboard">
+        <aside class="dash-sidebar professor-dash-side">
+          <div>
+            <div class="brand static"><span class="brand-mark">A<span>↑</span></span><span>AskUp</span></div>
+            <span class="side-kicker">FACULTY PORTAL</span>
+            <nav class="dash-nav professor-nav">
+              <button class="active"><span>▦</span> Dashboard</button>
+              <button><span>◷</span> Past sessions</button>
+              <button><span>◎</span> Courses</button>
+            </nav>
+          </div>
+          <div class="identity-card"><span>DA</span><div><strong>Dr. Abdelrahman</strong><small>Innovation & Entrepreneurship</small></div></div>
+        </aside>
+        <div class="dash-main professor-main">
+          <header class="prof-header"><div><span class="composer-kicker">WEDNESDAY, 7 OCTOBER</span><h1>Good afternoon, Dr. Abdelrahman.</h1><p>Ready to make the room a little more curious?</p></div><button class="icon-button" aria-label="Notifications">♢<b></b></button></header>
+          <div class="overview-grid">
+            <article class="course-card active-course session-launcher">
+              <button class="primary-button" id="start-session">Create session <span>＋</span></button>
+            </article>
+            <article class="stat-card"><span class="stat-icon coral-bg">↑</span><small>QUESTIONS THIS WEEK</small><strong>47</strong><p><b>+18%</b> from last week</p></article>
+            <article class="stat-card"><span class="stat-icon mint-bg">✓</span><small>ANSWER RATE</small><strong>82%</strong><p>Across 4 sessions</p></article>
+          </div>
+          <div class="recent-section"><div class="section-title-row"><div><span class="composer-kicker">RECENT ACTIVITY</span><h2>Your sessions</h2></div></div>
+            <div id="session-history"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view professor-session" data-view="professor-session">
+        <header class="session-topbar">
+          <div class="brand static"><span class="brand-mark light">A<span>↑</span></span><span>AskUp</span></div>
+          <div class="session-meta"><span><i></i> LIVE · 24 STUDENTS</span><strong id="professor-session-title">FIE101 · Validating opportunities</strong></div>
+          <div class="session-actions"><a class="student-test-link" href="/student" target="_blank" rel="noopener">Open student view ↗</a><button class="end-button" id="end-session">End session</button></div>
+        </header>
+        <div class="prof-session-grid">
+          <section class="join-display">
+            <span class="display-kicker">JOIN AT <strong>ASKUP.COM</strong></span>
+            <h1 data-session-code>MINT – OWL – 24</h1>
+            <button class="copy-code" id="copy-code">Copy code</button>
+            <blockquote>“Ask what everyone else<br>is thinking.”</blockquote>
+            <div class="display-values"><span><b>?</b><small>Be curious</small></span><span><b>◇</b><small>Stay anonymous</small></span><span><b>↗</b><small>Learn together</small></span></div>
+          </section>
+          <section class="moderation-panel">
+            <div class="moderation-head"><div><span class="composer-kicker">LIVE QUESTION QUEUE</span><h2>What the room is asking</h2></div><button class="projector-button" id="projector-button">Present question ↗</button></div>
+            <div class="moderation-filters"><button class="active" data-filter="new">New <b id="new-count">4</b></button><button data-filter="answered">Answered <b id="answered-count">0</b></button><select id="prof-sort" aria-label="Sort questions"><option value="votes">Top voted</option><option value="newest">Newest</option></select></div>
+            <div class="question-list professor-list" id="professor-question-list"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="success-modal" role="dialog" aria-modal="true" aria-labelledby="success-title">
+    <div class="modal-card"><div class="success-icon">↑</div><span class="composer-kicker">DELIVERED ANONYMOUSLY</span><h2 id="success-title">Question sent.</h2><p>Your professor can see it now. You can also upvote a similar question instead of asking twice.</p><div><button class="secondary-button" id="view-questions">View class questions</button><button class="primary-button" id="ask-another">Ask another</button></div></div>
+  </div>
+  <div class="modal" id="foul-modal" role="alertdialog" aria-modal="true" aria-labelledby="foul-title" aria-describedby="foul-message">
+    <div class="modal-card"><div class="success-icon warning-icon">!</div><span class="composer-kicker">QUESTION NOT SENT</span><h2 id="foul-title">Foul language detected!</h2><p id="foul-message">Please refrain from using foul language and be respectful of the professor and classroom.</p><div><button class="primary-button" id="close-foul-modal">Edit my question</button></div></div>
+  </div>
+  <div class="modal" id="create-session-modal" role="dialog" aria-modal="true" aria-labelledby="create-session-title">
+    <form class="modal-card session-creator" id="create-session-form">
+      <div class="success-icon">＋</div><span class="composer-kicker">NEW LIVE SESSION</span><h2 id="create-session-title">Create a session</h2><p>Name the lecture and share the generated code with your students.</p>
+      <label for="session-name">Session name</label><input id="session-name" maxlength="60" placeholder="e.g. Building a value proposition" required>
+      <div class="generated-code"><span><small>RANDOM JOIN CODE</small><strong id="new-session-code">MINT – OWL – 24</strong></span><button type="button" id="regenerate-session-code" aria-label="Generate another code">↻</button></div>
+      <div><button type="button" class="secondary-button" id="cancel-create-session">Cancel</button><button class="primary-button" type="submit">Create & start <span>→</span></button></div>
+    </form>
+  </div>
+  <div class="projector" id="projector" role="dialog" aria-modal="true" aria-label="Question projector view">
+    <button id="close-projector" aria-label="Close projector">×</button>
+    <div class="projector-brand">AskUp <span>LIVE</span></div>
+    <div class="projector-question"><span>THE ROOM IS ASKING</span><h1 id="projector-text">How do we validate an idea before spending money to build it?</h1><p><b id="projector-votes">18</b> students have this question</p></div>
+    <p class="projector-quote">No question is “too obvious.”</p>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
