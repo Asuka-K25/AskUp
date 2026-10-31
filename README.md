@@ -6,9 +6,10 @@ AskUp is a real-time classroom question platform. Students join a lecture with a
 
 - Separate student and professor interfaces
 - Professor-created sessions with random join codes
-- Real-time questions, upvotes, and answer status
-- Student ID and professor email validation
-- Client- and server-side foul-language blocking
+- Multiple simultaneous professor sessions with isolated question queues
+- Real-time questions with one vote per browser per question
+- No-login anonymous student access and professor email validation
+- Client- and server-side English and Arabic foul-language blocking
 - Completed-session history
 
 ## Run locally
