@@ -111,7 +111,7 @@
           <div class="identity-card"><span>?</span><div><strong>Anonymous student</strong><small>One vote per question</small></div></div>
         </aside>
         <div class="dash-main">
-          <header class="room-header"><div><span class="mobile-live"><i></i> LIVE</span><h1 id="student-room-title">Live session</h1><p id="student-professor-name">Session with your professor</p></div><div class="room-code"><small>ROOM CODE</small><strong data-session-code>—</strong></div></header>
+          <header class="room-header"><div><span class="mobile-live"><i></i> LIVE</span><h1 id="student-room-title">Live session</h1><p id="student-professor-name">Session with your professor</p><small class="material-note" id="student-material-note">No lecture material was uploaded for this session.</small></div><div class="room-code"><small>ROOM CODE</small><strong data-session-code>—</strong></div></header>
           <div class="student-tab active" id="ask-tab">
             <div class="question-composer">
               <span class="composer-kicker">YOUR QUESTION</span>
@@ -163,7 +163,7 @@
       <section class="view professor-session" data-view="professor-session">
         <header class="session-topbar">
           <div class="brand static"><span class="brand-mark light">A<span>↑</span></span><span>AskUp</span></div>
-          <div class="session-meta"><span><i></i> LIVE SESSION</span><strong id="professor-session-title">Live session</strong></div>
+          <div class="session-meta"><span><i></i> LIVE SESSION</span><strong id="professor-session-title">Live session</strong><small id="material-status">No reference file</small></div>
           <div class="session-actions"><a class="student-test-link" href="/student" target="_blank" rel="noopener">Open student view ↗</a><button class="end-button" id="end-session">End session</button></div>
         </header>
         <div class="prof-session-grid">
@@ -190,10 +190,14 @@
   <div class="modal" id="foul-modal" role="alertdialog" aria-modal="true" aria-labelledby="foul-title" aria-describedby="foul-message">
     <div class="modal-card"><div class="success-icon warning-icon">!</div><span class="composer-kicker">QUESTION NOT SENT</span><h2 id="foul-title">Foul language detected!</h2><p id="foul-message">Please refrain from using foul language and be respectful of the professor and classroom.</p><div><button class="primary-button" id="close-foul-modal">Edit my question</button></div></div>
   </div>
+  <div class="modal" id="relevance-modal" role="alertdialog" aria-modal="true" aria-labelledby="relevance-title" aria-describedby="relevance-message">
+    <div class="modal-card"><div class="success-icon warning-icon">?</div><span class="composer-kicker">QUESTION REVIEW</span><h2 id="relevance-title">This may be off-topic</h2><p id="relevance-message">Please keep questions related to the lecture or course logistics.</p><div><button class="secondary-button" id="edit-relevance-question">Edit question</button><button class="primary-button" id="submit-anyway">Submit anyway</button></div></div>
+  </div>
   <div class="modal" id="create-session-modal" role="dialog" aria-modal="true" aria-labelledby="create-session-title">
     <form class="modal-card session-creator" id="create-session-form">
-      <div class="success-icon">＋</div><span class="composer-kicker">NEW LIVE SESSION</span><h2 id="create-session-title">Create a session</h2><p>Name the lecture and share the generated code with your students.</p>
+      <div class="success-icon">＋</div><span class="composer-kicker">NEW LIVE SESSION</span><h2 id="create-session-title">Create a session</h2><p>Name the lecture, optionally add its material, and share the generated code.</p>
       <label for="session-name">Session name</label><input id="session-name" maxlength="60" placeholder="e.g. Building a value proposition" required>
+      <label for="session-material">Lecture material <small>(optional, max 12 MB)</small></label><input id="session-material" type="file" accept=".pdf,.pptx,.docx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
       <div class="generated-code"><span><small>RANDOM JOIN CODE</small><strong id="new-session-code">MINT – OWL – 24</strong></span><button type="button" id="regenerate-session-code" aria-label="Generate another code">↻</button></div>
       <div><button type="button" class="secondary-button" id="cancel-create-session">Cancel</button><button class="primary-button" type="submit">Create & start <span>→</span></button></div>
     </form>

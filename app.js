@@ -10,6 +10,7 @@ let professorId = "";
 let professorName = "Professor";
 let sessionHistory = [];
 let realtimeEvents = null;
+let pendingQuestionText = "";
 const voterId = localStorage.getItem("askup-voter-id") || (crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`);
 localStorage.setItem("askup-voter-id", voterId);
 
@@ -23,8 +24,21 @@ async function postRealtime(path, body = {}) {
   if (!response.ok) {
     const error = new Error(data.error || "Live sync is temporarily unavailable.");
     error.status = response.status;
+    error.code = data.code;
     throw error;
   }
+  return data;
+}
+
+async function uploadMaterial(file, code) {
+  if (file.size > 12_000_000) throw new Error("The file must be 12 MB or smaller.");
+  const response = await fetch("/api/session/material", {
+    method: "POST",
+    headers: { "X-Session-Code": code, "X-File-Name": encodeURIComponent(file.name) },
+    body: file
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "AskUp could not analyze this file.");
   return data;
 }
 
@@ -79,6 +93,10 @@ function updateSessionUI() {
   $("#student-room-title").textContent = activeSession.name;
   $("#student-professor-name").textContent = `Session with ${activeSession.professorName}`;
   $("#professor-session-title").textContent = `${activeSession.professorName} · ${activeSession.name}`;
+  $("#material-status").textContent = activeSession.material ? `Reference: ${activeSession.material.name}` : "No reference file";
+  $("#student-material-note").textContent = activeSession.material
+    ? `Questions are checked against ${activeSession.material.name}. Course logistics are still allowed.`
+    : "No lecture material was uploaded for this session.";
 }
 
 function showView(name) {
@@ -168,6 +186,33 @@ function openFoulLanguageModal() {
   $("#close-foul-modal").focus();
 }
 
+function openRelevanceModal(title, message, allowOverride) {
+  $("#relevance-title").textContent = title;
+  $("#relevance-message").textContent = message;
+  $("#submit-anyway").hidden = !allowOverride;
+  $("#relevance-modal").classList.add("open");
+  $("#edit-relevance-question").focus();
+}
+
+async function submitQuestion(text, overrideRelevance = false) {
+  try {
+    const state = await postRealtime("/api/questions", { code: activeSession.code, question: { text }, overrideRelevance });
+    applyRealtimeState(state);
+    $("#question-input").value = "";
+    $("#question-input").dispatchEvent(new Event("input"));
+    $("#relevance-modal").classList.remove("open");
+    $("#success-modal").classList.add("open");
+  } catch (error) {
+    if (error.code === "foul_language") return openFoulLanguageModal();
+    if (error.code === "personal_question") return openRelevanceModal("Personal question blocked", error.message, false);
+    if (error.code === "off_topic") {
+      pendingQuestionText = text;
+      return openRelevanceModal("This may be off-topic", `${error.message} You may edit it or submit it anyway.`, true);
+    }
+    showToast(error.message);
+  }
+}
+
 function presentQuestion(id) {
   const question = questions.find(item => item.id === Number(id)) || sortedQuestions("votes").find(item => !item.answered);
   if (!question) return showToast("There are no questions to present yet.");
@@ -226,16 +271,7 @@ $("#question-form").addEventListener("submit", async event => {
   const input = $("#question-input");
   const text = input.value.trim();
   if (containsFoulLanguage(text)) return openFoulLanguageModal();
-  try {
-    const state = await postRealtime("/api/questions", { code: activeSession.code, question: { text } });
-    applyRealtimeState(state);
-    input.value = "";
-    input.dispatchEvent(new Event("input"));
-    $("#success-modal").classList.add("open");
-  } catch (error) {
-    if (error.status === 422) openFoulLanguageModal();
-    else showToast(error.message);
-  }
+  await submitQuestion(text);
 });
 
 $("#student-question-list").addEventListener("click", async event => {
@@ -257,11 +293,14 @@ $("#prof-sort").addEventListener("change", renderQuestions);
 $("#view-questions").addEventListener("click", () => { $("#success-modal").classList.remove("open"); openStudentQuestions(); });
 $("#ask-another").addEventListener("click", () => { $("#success-modal").classList.remove("open"); $("#question-input").focus(); });
 $("#close-foul-modal").addEventListener("click", () => { $("#foul-modal").classList.remove("open"); $("#question-input").focus(); });
+$("#edit-relevance-question").addEventListener("click", () => { $("#relevance-modal").classList.remove("open"); $("#question-input").focus(); });
+$("#submit-anyway").addEventListener("click", async () => submitQuestion(pendingQuestionText, true));
 
 $("#start-session").addEventListener("click", () => {
   pendingSessionCode = generateSessionCode();
   $("#new-session-code").textContent = pendingSessionCode.replaceAll("-", " – ");
   $("#session-name").value = "";
+  $("#session-material").value = "";
   $("#create-session-modal").classList.add("open");
   $("#session-name").focus();
 });
@@ -280,12 +319,19 @@ $("#create-session-form").addEventListener("submit", async event => {
     return nameInput.reportValidity();
   }
   try {
-    const state = await postRealtime("/api/session", { session: { name, code: pendingSessionCode, professorId, professorName } });
+    let state = await postRealtime("/api/session", { session: { name, code: pendingSessionCode, professorId, professorName } });
+    let uploadError = "";
+    const material = $("#session-material").files[0];
+    if (material) {
+      try { state = await uploadMaterial(material, state.session.code); }
+      catch (error) { uploadError = error.message; }
+    }
     questions = [];
     connectRealtime(state.session.code, state);
     history.replaceState({}, "", `/professor?session=${encodeURIComponent(state.session.code)}`);
     $("#create-session-modal").classList.remove("open");
     showView("professor-session");
+    if (uploadError) showToast(uploadError);
   } catch (error) {
     if (error.status === 409) {
       pendingSessionCode = generateSessionCode();
@@ -340,6 +386,7 @@ $("#close-projector").addEventListener("click", () => $("#projector").classList.
 $("#projector").addEventListener("click", event => { if (event.target.id === "projector") $("#projector").classList.remove("open"); });
 $("#success-modal").addEventListener("click", event => { if (event.target.id === "success-modal") $("#success-modal").classList.remove("open"); });
 $("#foul-modal").addEventListener("click", event => { if (event.target.id === "foul-modal") $("#foul-modal").classList.remove("open"); });
+$("#relevance-modal").addEventListener("click", event => { if (event.target.id === "relevance-modal") $("#relevance-modal").classList.remove("open"); });
 $("#create-session-modal").addEventListener("click", event => { if (event.target.id === "create-session-modal") $("#create-session-modal").classList.remove("open"); });
 
 $("#copy-code").addEventListener("click", async () => {
@@ -348,7 +395,7 @@ $("#copy-code").addEventListener("click", async () => {
 });
 
 document.addEventListener("keydown", event => {
-  if (event.key === "Escape") ["projector", "success-modal", "foul-modal", "create-session-modal"].forEach(id => $(`#${id}`).classList.remove("open"));
+  if (event.key === "Escape") ["projector", "success-modal", "foul-modal", "relevance-modal", "create-session-modal"].forEach(id => $(`#${id}`).classList.remove("open"));
 });
 
 renderQuestions();

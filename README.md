@@ -10,6 +10,7 @@ AskUp is a real-time classroom question platform. Students join a lecture with a
 - Real-time questions with one vote per browser per question
 - No-login anonymous student access and professor email validation
 - Client- and server-side English and Arabic foul-language blocking
+- Optional PDF, PowerPoint, or Word lecture-material analysis with personal-question blocking and course-logistics exceptions
 - Completed-session history
 
 ## Run locally

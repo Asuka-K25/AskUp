@@ -2,6 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { containsFoulLanguage } = require("./moderation");
+const { extractMaterialText, reviewQuestion } = require("./materials");
 
 const root = __dirname;
 const port = Number(process.env.PORT || 4173);
@@ -9,9 +10,16 @@ const sessions = new Map();
 const clients = new Map();
 
 const sessionKey = code => String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const contentWordCount = text => text.trim().split(/\s+/).filter(Boolean).length;
 const publicQuestion = question => ({ id: question.id, text: question.text, votes: question.voters.size, age: question.age, answered: question.answered });
 const publicState = session => ({
-  session: { name: session.name, code: session.code, active: session.active, professorName: session.professorName },
+  session: {
+    name: session.name,
+    code: session.code,
+    active: session.active,
+    professorName: session.professorName,
+    material: session.material ? { name: session.material.name, wordCount: session.material.wordCount } : null
+  },
   questions: session.questions.map(publicQuestion)
 });
 
@@ -43,6 +51,22 @@ function readBody(req) {
   });
 }
 
+function readBuffer(req, limit = 12_000_000) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", chunk => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(Object.assign(new Error("The file must be 12 MB or smaller."), { status: 413 }));
+        req.destroy();
+      } else chunks.push(chunk);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
 async function handleApi(req, res, pathname, url) {
   if (req.method === "GET" && pathname === "/api/state") {
     const session = getSession(url.searchParams.get("code"));
@@ -63,6 +87,24 @@ async function handleApi(req, res, pathname, url) {
       if (!sessionClients.size) clients.delete(key);
     });
     return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/session/material") {
+    const session = getSession(req.headers["x-session-code"]);
+    if (!session || !session.active) return json(res, 404, { error: "Active session not found" });
+    let filename;
+    try { filename = path.basename(decodeURIComponent(String(req.headers["x-file-name"] || ""))).slice(0, 160); }
+    catch { return json(res, 400, { error: "Invalid file name" }); }
+    if (!/\.(?:pdf|pptx|docx)$/i.test(filename)) return json(res, 415, { error: "Upload a PDF, PowerPoint (.pptx), or Word (.docx) file." });
+    try {
+      const file = await readBuffer(req);
+      const text = extractMaterialText(file, filename);
+      session.material = { name: filename, text, wordCount: contentWordCount(text) };
+      broadcast(session);
+      return json(res, 200, publicState(session));
+    } catch (error) {
+      return json(res, error.status || 422, { error: error.message || "AskUp could not analyze this file." });
+    }
   }
 
   let body;
@@ -93,7 +135,14 @@ async function handleApi(req, res, pathname, url) {
     const text = body.question?.text;
     if (typeof text !== "string" || !text.trim() || text.length > 280) return json(res, 400, { error: "Invalid question" });
     if (containsFoulLanguage(text)) {
-      return json(res, 422, { error: "Foul language detected! Please refrain from using foul language and be respectful of the professor and classroom." });
+      return json(res, 422, { code: "foul_language", error: "Foul language detected! Please refrain from using foul language and be respectful of the professor and classroom." });
+    }
+    const review = reviewQuestion(text, session.material ? `${session.name} ${session.material.text}` : "");
+    if (review.decision === "personal") {
+      return json(res, 422, { code: "personal_question", error: "Please keep questions related to the lecture, course, or class logistics." });
+    }
+    if (review.decision === "off_topic" && !body.overrideRelevance) {
+      return json(res, 409, { code: "off_topic", error: "This question may not relate to the uploaded lecture material." });
     }
     session.questions.push({ id: Date.now() * 1000 + Math.floor(Math.random() * 1000), text: text.trim(), age: "just now", answered: false, voters: new Set() });
   } else if (req.method === "POST" && /^\/api\/questions\/\d+\/upvote$/.test(pathname)) {
