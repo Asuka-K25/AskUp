@@ -124,6 +124,7 @@ function contentWords(text) {
 }
 
 function reviewQuestion(question, materialText = "") {
+  const plainText = normalize(question).replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim();
   const text = normalizedQuestion(question);
   const compact = text.replace(/\s+/g, "");
   const personalPatterns = [
@@ -142,7 +143,8 @@ function reviewQuestion(question, materialText = "") {
   if (personalPatterns.some(pattern => pattern.test(text)) || compactPersonal.test(compact) || professorFocused) return { decision: "personal" };
 
   const logisticsPattern = /\b(?:exam|quiz|test|midterm|final|assignment|homework|project|presentation|deadline|due date|grade|marks|assessment|exam format|exam date)\b|(?:اختبار|امتحان|كويز|واجب|مشروع|عرض|موعد التسليم|درجات|تقييم)/;
-  if (logisticsPattern.test(text)) return { decision: "allowed" };
+  const slideRequest = /\b(?:explain|clarify|repeat|review|revisit|show|cover|go over)\b.{0,40}(?:(?:slide|page)\s*(?:number|no)?\s*(?:[\d٠-٩]+|one|two|three|four|five|six|seven|eight|nine|ten|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)|(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+(?:slide|page))|(?:اشرح|وضح|اعد|راجع).{0,30}(?:الشريحة|الشريحه|السلايد|صفحة|صفحه)\s*[\d٠-٩]+/;
+  if (logisticsPattern.test(text) || slideRequest.test(plainText)) return { decision: "allowed" };
 
   const materialWords = new Set(contentWords(materialText));
   const questionWords = contentWords(question);

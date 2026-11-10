@@ -68,6 +68,9 @@ test("AskUp isolates sessions, moderates two languages, and limits votes", async
     assert.equal(reviewQuestion("What is your experience with innovation?", "customer discovery and innovation").decision, "personal");
     assert.equal(reviewQuestion("Why did you become a professor?", "customer discovery and innovation").decision, "personal");
     assert.equal(reviewQuestion("Can you explain customer validation?", "customer discovery and innovation").decision, "allowed");
+    assert.equal(reviewQuestion("Explain slide 5 again", "customer discovery and innovation").decision, "allowed");
+    assert.equal(reviewQuestion("Could you clarify the fifth slide?", "customer discovery and innovation").decision, "allowed");
+    assert.equal(reviewQuestion("اشرح الشريحة ٥ مرة اخرى", "customer discovery and innovation").decision, "allowed");
     assert.equal(reviewQuestion("What is your favorite football team?", "customer discovery and innovation").decision, "personal");
 
     const first = { name: "Innovation class", code: "48217", professorId: "sara.khan@university.edu", professorName: "Dr. Sara Khan" };
