@@ -10,7 +10,6 @@ let professorId = "";
 let professorName = "Professor";
 let sessionHistory = [];
 let realtimeEvents = null;
-let pendingQuestionText = "";
 const voterId = localStorage.getItem("askup-voter-id") || (crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`);
 localStorage.setItem("askup-voter-id", voterId);
 
@@ -64,10 +63,7 @@ function connectRealtime(code, initialState) {
 }
 
 function generateSessionCode() {
-  const firstWords = ["MINT", "BRAVE", "NOVA", "BRIGHT", "CORAL", "SWIFT", "SOLAR", "CLEAR"];
-  const secondWords = ["OWL", "FOX", "IDEA", "SPARK", "WAVE", "LION", "MAPLE", "COMET"];
-  const randomIndex = length => crypto.getRandomValues(new Uint32Array(1))[0] % length;
-  return `${firstWords[randomIndex(firstWords.length)]}-${secondWords[randomIndex(secondWords.length)]}-${String(randomIndex(90) + 10)}`;
+  return String(10000 + crypto.getRandomValues(new Uint32Array(1))[0] % 90000);
 }
 
 function professorNameFromId(id) {
@@ -128,6 +124,26 @@ function voteStorageKey() {
   return `askup-votes-${activeSession?.code || "none"}`;
 }
 
+function submittedStorageKey() {
+  return `askup-submitted-${activeSession?.code || "none"}`;
+}
+
+function submittedQuestionIds() {
+  return new Set(JSON.parse(localStorage.getItem(submittedStorageKey()) || "[]"));
+}
+
+function rememberSubmittedQuestion(id) {
+  const ids = submittedQuestionIds();
+  ids.add(Number(id));
+  localStorage.setItem(submittedStorageKey(), JSON.stringify([...ids]));
+}
+
+function forgetSubmittedQuestion(id) {
+  const ids = submittedQuestionIds();
+  ids.delete(Number(id));
+  localStorage.setItem(submittedStorageKey(), JSON.stringify([...ids]));
+}
+
 function votedQuestionIds() {
   return new Set(JSON.parse(localStorage.getItem(voteStorageKey()) || "[]"));
 }
@@ -140,10 +156,11 @@ function rememberVote(id) {
 
 function studentQuestionMarkup(question) {
   const voted = votedQuestionIds().has(question.id);
+  const canDelete = submittedQuestionIds().has(question.id);
   return `<article class="question-item">
     <button class="vote-button${voted ? " voted" : ""}" data-upvote="${question.id}" aria-label="${voted ? "Already voted" : "Upvote question"}" ${voted ? "disabled" : ""}><span>↑</span>${question.votes}</button>
     <div class="question-copy"><p>${escapeHtml(question.text)}</p><small>${question.age}</small></div>
-    <button class="question-menu" aria-label="More options">⋮</button>
+    ${canDelete ? `<button class="delete-question" data-delete="${question.id}" aria-label="Delete your question">Delete</button>` : ""}
   </article>`;
 }
 
@@ -186,17 +203,17 @@ function openFoulLanguageModal() {
   $("#close-foul-modal").focus();
 }
 
-function openRelevanceModal(title, message, allowOverride) {
+function openRelevanceModal(title, message) {
   $("#relevance-title").textContent = title;
   $("#relevance-message").textContent = message;
-  $("#submit-anyway").hidden = !allowOverride;
   $("#relevance-modal").classList.add("open");
   $("#edit-relevance-question").focus();
 }
 
-async function submitQuestion(text, overrideRelevance = false) {
+async function submitQuestion(text) {
   try {
-    const state = await postRealtime("/api/questions", { code: activeSession.code, question: { text }, overrideRelevance });
+    const state = await postRealtime("/api/questions", { code: activeSession.code, question: { text }, ownerId: voterId });
+    rememberSubmittedQuestion(state.createdQuestionId);
     applyRealtimeState(state);
     $("#question-input").value = "";
     $("#question-input").dispatchEvent(new Event("input"));
@@ -204,11 +221,8 @@ async function submitQuestion(text, overrideRelevance = false) {
     $("#success-modal").classList.add("open");
   } catch (error) {
     if (error.code === "foul_language") return openFoulLanguageModal();
-    if (error.code === "personal_question") return openRelevanceModal("Personal question blocked", error.message, false);
-    if (error.code === "off_topic") {
-      pendingQuestionText = text;
-      return openRelevanceModal("This may be off-topic", `${error.message} You may edit it or submit it anyway.`, true);
-    }
+    if (error.code === "personal_question") return openRelevanceModal("Personal question blocked", error.message);
+    if (error.code === "off_topic") return openRelevanceModal("Question outside the lecture", error.message);
     showToast(error.message);
   }
 }
@@ -221,7 +235,7 @@ function presentQuestion(id) {
   $("#projector").classList.add("open");
 }
 
-console.assert(/^[A-Z]+-[A-Z]+-\d{2}$/.test(generateSessionCode()), "Session codes should contain two words and two digits.");
+console.assert(/^\d{5}$/.test(generateSessionCode()), "Session codes should contain five digits.");
 console.assert(containsFoulLanguage("dumb-@ss") && containsFoulLanguage("يا شرموط"), "English and Arabic moderation should be enabled.");
 console.assert(!containsFoulLanguage("Please explain the class assignment"), "Ordinary classroom language should be allowed.");
 
@@ -275,6 +289,15 @@ $("#question-form").addEventListener("submit", async event => {
 });
 
 $("#student-question-list").addEventListener("click", async event => {
+  const remove = event.target.closest("[data-delete]");
+  if (remove) {
+    try {
+      const state = await postRealtime(`/api/questions/${remove.dataset.delete}/delete`, { code: activeSession.code, ownerId: voterId });
+      forgetSubmittedQuestion(remove.dataset.delete);
+      applyRealtimeState(state);
+      return showToast("Your question was deleted.");
+    } catch (error) { return showToast(error.message); }
+  }
   const button = event.target.closest("[data-upvote]");
   if (!button || button.disabled) return;
   try {
@@ -294,7 +317,6 @@ $("#view-questions").addEventListener("click", () => { $("#success-modal").class
 $("#ask-another").addEventListener("click", () => { $("#success-modal").classList.remove("open"); $("#question-input").focus(); });
 $("#close-foul-modal").addEventListener("click", () => { $("#foul-modal").classList.remove("open"); $("#question-input").focus(); });
 $("#edit-relevance-question").addEventListener("click", () => { $("#relevance-modal").classList.remove("open"); $("#question-input").focus(); });
-$("#submit-anyway").addEventListener("click", async () => submitQuestion(pendingQuestionText, true));
 
 $("#start-session").addEventListener("click", () => {
   pendingSessionCode = generateSessionCode();

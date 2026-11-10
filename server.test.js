@@ -62,10 +62,16 @@ test("AskUp isolates sessions, moderates two languages, and limits votes", async
     assert.match(extractMaterialText(samplePdf, "lecture.pdf"), /customer validation/);
     assert.equal(reviewQuestion("What is the exam format?", "customer discovery and innovation").decision, "allowed");
     assert.equal(reviewQuestion("Are you married?", "customer discovery and innovation").decision, "personal");
-    assert.equal(reviewQuestion("What is your favorite football team?", "customer discovery and innovation").decision, "off_topic");
+    assert.equal(reviewQuestion("a r e  u  m a r r i e d?", "customer discovery and innovation").decision, "personal");
+    assert.equal(reviewQuestion("Do you want kids?", "customer discovery and innovation").decision, "personal");
+    assert.equal(reviewQuestion("What is your religion?", "customer discovery and innovation").decision, "personal");
+    assert.equal(reviewQuestion("What is your experience with innovation?", "customer discovery and innovation").decision, "personal");
+    assert.equal(reviewQuestion("Why did you become a professor?", "customer discovery and innovation").decision, "personal");
+    assert.equal(reviewQuestion("Can you explain customer validation?", "customer discovery and innovation").decision, "allowed");
+    assert.equal(reviewQuestion("What is your favorite football team?", "customer discovery and innovation").decision, "personal");
 
-    const first = { name: "Innovation class", code: "NOVA-OWL-42", professorId: "sara.khan@university.edu", professorName: "Dr. Sara Khan" };
-    const second = { name: "Entrepreneurship class", code: "MINT-FOX-21", professorId: "omar@university.edu", professorName: "Dr. Omar" };
+    const first = { name: "Innovation class", code: "48217", professorId: "sara.khan@university.edu", professorName: "Dr. Sara Khan" };
+    const second = { name: "Entrepreneurship class", code: "59328", professorId: "omar@university.edu", professorName: "Dr. Omar" };
     assert.equal((await post("/api/session", { session: first })).status, 201);
     assert.equal((await post("/api/session", { session: second })).status, 201);
 
@@ -77,25 +83,25 @@ test("AskUp isolates sessions, moderates two languages, and limits votes", async
     assert.equal(uploadResponse.status, 200);
     assert.equal((await uploadResponse.json()).session.material.name, "innovation.pdf");
 
-    const offTopic = await post("/api/questions", { code: first.code, question: { text: "What is your favorite football team?" } });
-    assert.equal(offTopic.status, 409);
+    const offTopic = await post("/api/questions", { code: first.code, question: { text: "Can we discuss football tactics?" }, ownerId: "student-browser-one" });
+    assert.equal(offTopic.status, 422);
     assert.equal((await offTopic.json()).code, "off_topic");
-    assert.equal((await post("/api/questions", { code: first.code, question: { text: "What is your favorite football team?" }, overrideRelevance: true })).status, 200);
-    assert.equal((await post("/api/questions", { code: first.code, question: { text: "What is the exam format?" } })).status, 200);
-    const personal = await post("/api/questions", { code: second.code, question: { text: "Are you married?" } });
+    assert.equal((await post("/api/questions", { code: first.code, question: { text: "What is your favorite football team?" }, overrideRelevance: true, ownerId: "student-browser-one" })).status, 422);
+    assert.equal((await post("/api/questions", { code: first.code, question: { text: "What is the exam format?" }, ownerId: "student-browser-one" })).status, 200);
+    const personal = await post("/api/questions", { code: second.code, question: { text: "Are you married?" }, ownerId: "student-browser-one" });
     assert.equal(personal.status, 422);
     assert.equal((await personal.json()).code, "personal_question");
 
-    const firstQuestion = await post("/api/questions", { code: first.code, question: { text: "How does customer validation work in our class?" } });
+    const firstQuestion = await post("/api/questions", { code: first.code, question: { text: "How does customer validation work in our class?" }, ownerId: "student-browser-one" });
     assert.equal(firstQuestion.status, 200);
     const questionId = (await firstQuestion.json()).questions.at(-1).id;
-    assert.equal((await post("/api/questions", { code: second.code, question: { text: "Is our room separate?" } })).status, 200);
+    assert.equal((await post("/api/questions", { code: second.code, question: { text: "How does entrepreneurship work?" }, ownerId: "student-browser-two" })).status, 200);
 
     const firstState = await fetch(`${base}/api/state?code=${first.code}`).then(result => result.json());
     const secondState = await fetch(`${base}/api/state?code=${second.code}`).then(result => result.json());
     assert.equal(firstState.session.professorName, "Dr. Sara Khan");
     assert.equal(firstState.questions.at(-1).text, "How does customer validation work in our class?");
-    assert.deepEqual(secondState.questions.map(item => item.text), ["Is our room separate?"]);
+    assert.deepEqual(secondState.questions.map(item => item.text), ["How does entrepreneurship work?"]);
 
     assert.equal((await post(`/api/questions/${questionId}/upvote`, { code: first.code, voterId: "student-browser-one" })).status, 200);
     assert.equal((await post(`/api/questions/${questionId}/upvote`, { code: first.code, voterId: "student-browser-one" })).status, 409);
@@ -103,12 +109,19 @@ test("AskUp isolates sessions, moderates two languages, and limits votes", async
     const votedState = await fetch(`${base}/api/state?code=${first.code}`).then(result => result.json());
     assert.equal(votedState.questions.find(item => item.id === questionId).votes, 2);
 
-    assert.equal((await post("/api/questions", { code: first.code, question: { text: "This is d.u.m.b.a.s.s nonsense" } })).status, 422);
-    assert.equal((await post("/api/questions", { code: first.code, question: { text: "انت شرموط" } })).status, 422);
+    assert.equal((await post("/api/questions", { code: first.code, question: { text: "This is d.u.m.b.a.s.s nonsense" }, ownerId: "student-browser-one" })).status, 422);
+    assert.equal((await post("/api/questions", { code: first.code, question: { text: "انت شرموط" }, ownerId: "student-browser-one" })).status, 422);
 
-    assert.equal((await post(`/api/questions/${questionId}/answer`, { code: first.code })).status, 200);
+    assert.equal((await post(`/api/questions/${questionId}/delete`, { code: first.code, ownerId: "student-browser-two" })).status, 403);
+    assert.equal((await post(`/api/questions/${questionId}/delete`, { code: first.code, ownerId: "student-browser-one" })).status, 200);
+    const deletedState = await fetch(`${base}/api/state?code=${first.code}`).then(result => result.json());
+    assert.equal(deletedState.questions.some(item => item.id === questionId), false);
+
+    const answerable = await post("/api/questions", { code: first.code, question: { text: "How does customer validation work?" }, ownerId: "student-browser-one" });
+    const answerableId = (await answerable.json()).createdQuestionId;
+    assert.equal((await post(`/api/questions/${answerableId}/answer`, { code: first.code })).status, 200);
     const answeredState = await fetch(`${base}/api/state?code=${first.code}`).then(result => result.json());
-    assert.equal(answeredState.questions.find(item => item.id === questionId).answered, true);
+    assert.equal(answeredState.questions.find(item => item.id === answerableId).answered, true);
 
     assert.equal((await post("/api/session/end", { code: first.code })).status, 200);
     assert.equal((await fetch(`${base}/api/state?code=${first.code}`)).status, 404);

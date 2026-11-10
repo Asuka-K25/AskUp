@@ -45,7 +45,7 @@
           <div class="orb orb-one"></div><div class="orb orb-two"></div>
           <div class="phone-card">
             <div class="mini-header"><span class="mini-logo">A↑</span><span class="live-pill"><i></i> Live</span></div>
-            <div class="mini-code">MINT–OWL–24</div>
+            <div class="mini-code">48217</div>
             <p class="mini-prompt">What’s on your mind?</p>
             <div class="mini-question featured">
               <span class="avatar">?</span>
@@ -81,7 +81,7 @@
       <section class="view student-app" data-view="student-join">
         <aside class="side-panel student-side">
           <div><span class="side-kicker">ASKUP STUDENT</span><h2>Join the room,<br>not the spotlight.</h2></div>
-          <p>Enter the words shown at the front of your lecture. No camera, no awkward scan.</p>
+          <p>Enter the five digits shown at the front of your lecture. No camera, no awkward scan.</p>
           <div class="side-tip"><span>i</span><p><strong>You’re anonymous in class.</strong><br>Ask in good faith. Harmful content is blocked automatically.</p></div>
         </aside>
         <div class="join-panel">
@@ -89,9 +89,9 @@
           <div class="join-content">
             <span class="step-label">STEP 1 OF 1</span>
             <h1>What’s the session code?</h1>
-            <p>It’s three short words shown by your professor.</p>
+            <p>It’s the five-digit number shown by your professor.</p>
             <form id="join-form">
-              <input id="session-code" class="code-input" placeholder="MINT – OWL – 24" aria-label="Session code" autocomplete="off" required>
+              <input id="session-code" class="code-input" inputmode="numeric" pattern="[0-9]{5}" minlength="5" maxlength="5" placeholder="48217" aria-label="Five-digit session code" autocomplete="off" required>
               <button class="primary-button full" type="submit">Join lecture <span>→</span></button>
             </form>
           </div>
@@ -169,7 +169,7 @@
         <div class="prof-session-grid">
           <section class="join-display">
             <span class="display-kicker">OPEN THE <strong>STUDENT LINK</strong> AND ENTER</span>
-            <h1 data-session-code>MINT – OWL – 24</h1>
+            <h1 data-session-code>48217</h1>
             <button class="copy-code" id="copy-code">Copy code</button>
             <blockquote>“Ask what everyone else<br>is thinking.”</blockquote>
             <div class="display-values"><span><b>?</b><small>Be curious</small></span><span><b>◇</b><small>Stay anonymous</small></span><span><b>↗</b><small>Learn together</small></span></div>
@@ -191,14 +191,14 @@
     <div class="modal-card"><div class="success-icon warning-icon">!</div><span class="composer-kicker">QUESTION NOT SENT</span><h2 id="foul-title">Foul language detected!</h2><p id="foul-message">Please refrain from using foul language and be respectful of the professor and classroom.</p><div><button class="primary-button" id="close-foul-modal">Edit my question</button></div></div>
   </div>
   <div class="modal" id="relevance-modal" role="alertdialog" aria-modal="true" aria-labelledby="relevance-title" aria-describedby="relevance-message">
-    <div class="modal-card"><div class="success-icon warning-icon">?</div><span class="composer-kicker">QUESTION REVIEW</span><h2 id="relevance-title">This may be off-topic</h2><p id="relevance-message">Please keep questions related to the lecture or course logistics.</p><div><button class="secondary-button" id="edit-relevance-question">Edit question</button><button class="primary-button" id="submit-anyway">Submit anyway</button></div></div>
+    <div class="modal-card"><div class="success-icon warning-icon">?</div><span class="composer-kicker">QUESTION NOT SENT</span><h2 id="relevance-title">Question blocked</h2><p id="relevance-message">Please keep questions related to the lecture, exam, assignment, or project.</p><div><button class="primary-button" id="edit-relevance-question">Edit question</button></div></div>
   </div>
   <div class="modal" id="create-session-modal" role="dialog" aria-modal="true" aria-labelledby="create-session-title">
     <form class="modal-card session-creator" id="create-session-form">
       <div class="success-icon">＋</div><span class="composer-kicker">NEW LIVE SESSION</span><h2 id="create-session-title">Create a session</h2><p>Name the lecture, optionally add its material, and share the generated code.</p>
       <label for="session-name">Session name</label><input id="session-name" maxlength="60" placeholder="e.g. Building a value proposition" required>
       <label for="session-material">Lecture material <small>(optional, max 12 MB)</small></label><input id="session-material" type="file" accept=".pdf,.pptx,.docx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-      <div class="generated-code"><span><small>RANDOM JOIN CODE</small><strong id="new-session-code">MINT – OWL – 24</strong></span><button type="button" id="regenerate-session-code" aria-label="Generate another code">↻</button></div>
+      <div class="generated-code"><span><small>5-DIGIT JOIN CODE</small><strong id="new-session-code">48217</strong></span><button type="button" id="regenerate-session-code" aria-label="Generate another code">↻</button></div>
       <div><button type="button" class="secondary-button" id="cancel-create-session">Cancel</button><button class="primary-button" type="submit">Create & start <span>→</span></button></div>
     </form>
   </div>

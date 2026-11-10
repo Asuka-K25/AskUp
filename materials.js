@@ -114,23 +114,35 @@ function normalize(text) {
     .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي");
 }
 
+function normalizedQuestion(text) {
+  return normalize(text).replace(/0/g, "o").replace(/[1!]/g, "i").replace(/3/g, "e").replace(/4/g, "a").replace(/5/g, "s").replace(/7/g, "t")
+    .replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\b(?:u|yu)\b/g, "you").replace(/\bur\b/g, "your").replace(/\s+/g, " ").trim();
+}
+
 function contentWords(text) {
   return [...new Set((normalize(text).match(/[\p{L}\p{N}]{3,}/gu) || []).filter(word => !stopWords.has(word)))];
 }
 
 function reviewQuestion(question, materialText = "") {
-  const text = normalize(question);
+  const text = normalizedQuestion(question);
+  const compact = text.replace(/\s+/g, "");
   const personalPatterns = [
-    /\b(?:are you|were you) (?:married|single|dating)\b/, /\bhow old are you\b/, /\bwhere do you live\b/,
-    /\bdo you have (?:children|kids)\b/, /\b(?:your|professor'?s) (?:wife|husband|girlfriend|boyfriend|partner|family|children|kids|age|salary|religion|address|phone|number|private life)\b/,
-    /\bwhat is your (?:age|salary|religion|address|phone number)\b/,
+    /\b(?:are|were) you (?:married|single|dating|divorced|engaged)\b/, /\bhow old are you\b/, /\bwhere (?:do|did) you (?:live|grow up|come from)\b/,
+    /\b(?:do|did) you (?:have|want|like|love|follow|believe|date|drink|smoke|vote|color|colour|dye)\b/,
+    /\b(?:have|would|will) you (?:have|want|like|date|marry|adopt)\b/,
+    /\b(?:your|professor'?s) (?:wife|husband|girlfriend|boyfriend|partner|family|children|kids|son|daughter|age|birthday|salary|religion|faith|address|phone|number|nationality|private life|politics|instagram|social media)\b/,
+    /\bwhat(?:'s| is| are) your (?:age|birthday|salary|religion|faith|address|phone number|nationality|favorite|favourite|hobby|relationship status)\b/,
+    /\b(?:favorite|favourite) (?:color|colour|food|movie|team|sport|song|place|person)\b/,
     /(?:هل انت|هل انتي) (?:متزوج|متزوجه|اعزب|عزباء)/, /كم عمرك/, /اين تسكن/, /وين تسكن/,
-    /(?:زوجتك|زوجك|راتبك|دينك|عمرك|عنوانك|رقم هاتفك|حياتك الشخصيه|حياتك الخاصة)/
+    /(?:عندك|تبغي|تريد) (?:اطفال|اولاد|عيال)/, /(?:زوجتك|زوجك|راتبك|دينك|ديانتك|عمرك|عنوانك|رقم هاتفك|جنسيتك|حياتك الشخصيه|حياتك الخاصه|لونك المفضل)/
   ];
-  if (personalPatterns.some(pattern => pattern.test(text))) return { decision: "personal" };
+  const compactPersonal = /(?:are|were|do|did|have|would|will|where|what|how)?you.*(?:married|single|dating|divorced|engaged|wife|husband|girlfriend|boyfriend|partner|children|kids|baby|babies|religion|faith|salary|birthday|favorite|favourite|hobby|nationality|live)/;
+  const academicRequest = /\b(?:can|could|would) you (?:explain|clarify|repeat|show|give|provide|review|cover|go over)\b|\bwhat do you mean\b|\bhow do you (?:calculate|solve|derive|apply|use)\b|\b(?:will|can) you (?:upload|share|post) (?:the )?(?:slides|notes|material|exam|assignment|project)\b/;
+  const professorFocused = /\b(?:you|your|yourself)\b/.test(text) && !academicRequest.test(text);
+  if (personalPatterns.some(pattern => pattern.test(text)) || compactPersonal.test(compact) || professorFocused) return { decision: "personal" };
 
-  const logisticsPattern = /\b(?:exam|quiz|test|midterm|final|assignment|homework|project|presentation|deadline|due date|grade|marks|syllabus|office hours|schedule|attendance|assessment|exam format|exam date)\b|(?:اختبار|امتحان|كويز|واجب|مشروع|عرض|موعد التسليم|درجات|منهج|ساعات مكتبيه|حضور|تقييم)/;
-  if (logisticsPattern.test(text) || !materialText) return { decision: "allowed" };
+  const logisticsPattern = /\b(?:exam|quiz|test|midterm|final|assignment|homework|project|presentation|deadline|due date|grade|marks|assessment|exam format|exam date)\b|(?:اختبار|امتحان|كويز|واجب|مشروع|عرض|موعد التسليم|درجات|تقييم)/;
+  if (logisticsPattern.test(text)) return { decision: "allowed" };
 
   const materialWords = new Set(contentWords(materialText));
   const questionWords = contentWords(question);

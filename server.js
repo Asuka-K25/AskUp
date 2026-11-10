@@ -113,7 +113,7 @@ async function handleApi(req, res, pathname, url) {
 
   if (req.method === "POST" && pathname === "/api/session") {
     const incoming = body.session;
-    if (!incoming?.name?.trim() || !incoming?.code || !incoming?.professorName?.trim()) return json(res, 400, { error: "Invalid session" });
+    if (!incoming?.name?.trim() || !/^\d{5}$/.test(String(incoming?.code || "")) || !incoming?.professorName?.trim()) return json(res, 400, { error: "Invalid session" });
     const key = sessionKey(incoming.code);
     if (sessions.get(key)?.active) return json(res, 409, { error: "That session code is already in use" });
     const session = {
@@ -133,18 +133,23 @@ async function handleApi(req, res, pathname, url) {
 
   if (req.method === "POST" && pathname === "/api/questions") {
     const text = body.question?.text;
+    const ownerId = String(body.ownerId || "");
     if (typeof text !== "string" || !text.trim() || text.length > 280) return json(res, 400, { error: "Invalid question" });
+    if (ownerId.length < 8 || ownerId.length > 100) return json(res, 400, { error: "Invalid student identity" });
     if (containsFoulLanguage(text)) {
       return json(res, 422, { code: "foul_language", error: "Foul language detected! Please refrain from using foul language and be respectful of the professor and classroom." });
     }
-    const review = reviewQuestion(text, session.material ? `${session.name} ${session.material.text}` : "");
+    const review = reviewQuestion(text, `${session.name} ${session.material?.text || ""}`);
     if (review.decision === "personal") {
-      return json(res, 422, { code: "personal_question", error: "Please keep questions related to the lecture, course, or class logistics." });
+      return json(res, 422, { code: "personal_question", error: "Personal questions are not allowed. Please ask only about the lecture, exam, assignment, or project." });
     }
-    if (review.decision === "off_topic" && !body.overrideRelevance) {
-      return json(res, 409, { code: "off_topic", error: "This question may not relate to the uploaded lecture material." });
+    if (review.decision === "off_topic") {
+      return json(res, 422, { code: "off_topic", error: "This question is outside the lecture topic. Only lecture, exam, assignment, or project questions can be submitted." });
     }
-    session.questions.push({ id: Date.now() * 1000 + Math.floor(Math.random() * 1000), text: text.trim(), age: "just now", answered: false, voters: new Set() });
+    const question = { id: Date.now() * 1000 + Math.floor(Math.random() * 1000), text: text.trim(), age: "just now", answered: false, voters: new Set(), ownerId };
+    session.questions.push(question);
+    broadcast(session);
+    return json(res, 200, { ...publicState(session), createdQuestionId: question.id });
   } else if (req.method === "POST" && /^\/api\/questions\/\d+\/upvote$/.test(pathname)) {
     const question = session.questions.find(item => item.id === Number(pathname.split("/")[3]));
     const voterId = String(body.voterId || "");
@@ -155,6 +160,12 @@ async function handleApi(req, res, pathname, url) {
     const question = session.questions.find(item => item.id === Number(pathname.split("/")[3]));
     if (!question) return json(res, 404, { error: "Question not found" });
     question.answered = !question.answered;
+  } else if (req.method === "POST" && /^\/api\/questions\/\d+\/delete$/.test(pathname)) {
+    const index = session.questions.findIndex(item => item.id === Number(pathname.split("/")[3]));
+    const ownerId = String(body.ownerId || "");
+    if (index < 0) return json(res, 404, { error: "Question not found" });
+    if (!ownerId || session.questions[index].ownerId !== ownerId) return json(res, 403, { error: "You can only delete a question you asked." });
+    session.questions.splice(index, 1);
   } else if (req.method === "POST" && pathname === "/api/session/end") {
     session.active = false;
   } else {
